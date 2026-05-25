@@ -6,6 +6,7 @@ import CommandPalette from "./components/CommandPalette";
 import FocusModeOverlay from "./components/FocusModeOverlay";
 import BrainMascot from "./components/BrainMascot";
 
+import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Resources from "./pages/Resources";
 import Tools from "./pages/Tools";
@@ -15,13 +16,15 @@ import Admin from "./pages/Admin";
 import Journal from "./pages/Journal";
 import Badges from "./pages/Badges";
 import AnxietyToolkit, { ToolkitTool } from "./pages/AnxietyToolkit";
+import { Privacy, Safety, Terms } from "./pages/Legal";
 import { AUTH_CHANGED_EVENT, getMe, type ApiUser } from "./lib/api";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [user, setUser] = useState<ApiUser | null>(null);
   const [checking, setChecking] = useState(true);
-  const isAccountPage = location.pathname === "/account";
+  const publicPaths = ["/", "/account", "/privacy", "/terms", "/safety"];
+  const isPublicPage = publicPaths.includes(location.pathname);
 
   const checkAuth = () => {
     setChecking(true);
@@ -48,7 +51,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user && !isAccountPage) {
+  if (!user && !isPublicPage) {
     return <Navigate to="/account" replace state={{ from: location.pathname }} />;
   }
 
@@ -60,7 +63,11 @@ function App() {
     <Layout>
       <AuthGate>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Landing />} />
+          <Route path="/app" element={<Home />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/safety" element={<Safety />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/tools/:toolId" element={<Tools />} />

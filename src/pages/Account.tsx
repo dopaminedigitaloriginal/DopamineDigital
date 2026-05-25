@@ -75,7 +75,7 @@ export default function Account() {
 
   const fromPath = typeof location.state === "object" && location.state && "from" in location.state
     ? String(location.state.from)
-    : "/";
+    : "/app";
 
   return (
     <div className="brand-page">
@@ -97,7 +97,7 @@ export default function Account() {
               <p>Role: {user.role} | Membership: {user.membership}</p>
             </div>
             <div className="account-toggle">
-              <Link className="primary-button" to={fromPath === "/account" ? "/" : fromPath}>Go to dashboard</Link>
+              <Link className="primary-button" to={fromPath === "/account" ? "/app" : fromPath}>Go to dashboard</Link>
               <button className="secondary-button" onClick={logout} type="button">Sign out</button>
             </div>
           </>

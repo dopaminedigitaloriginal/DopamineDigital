@@ -29,3 +29,6 @@ dist
 .env.local
 server/data
 *.log
+
+.vercel
+.env*

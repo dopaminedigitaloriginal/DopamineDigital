@@ -10,7 +10,7 @@ function CommandPalette() {
   const { startFocus, stopFocus, resetFocus } = useFocus();
 
   const items = useMemo(() => [
-    { label: "Home", hint: "Open dashboard", run: () => navigate("/") },
+    { label: "Home", hint: "Open dashboard", run: () => navigate("/app") },
     { label: "Tools", hint: "Open tools", run: () => navigate("/tools") },
     { label: "Journal", hint: "Open brain dump journal", run: () => navigate("/journal") },
     { label: "Toolkit", hint: "Open text anxiety toolkit", run: () => navigate("/toolkit") },
@@ -28,7 +28,7 @@ function CommandPalette() {
     } },
     { label: "Start focus", hint: "Begin focus mode", run: startFocus },
     { label: "Stop focus", hint: "Pause focus mode", run: stopFocus },
-    { label: "Show stats", hint: "Return to dashboard", run: () => navigate("/") },
+    { label: "Show stats", hint: "Return to dashboard", run: () => navigate("/app") },
     { label: "Reset", hint: "Log a reset", run: resetFocus },
   ], [navigate, resetFocus, startFocus, stopFocus]);
 

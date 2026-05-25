@@ -12,7 +12,7 @@ function Sidebar() {
   }, [location.pathname]);
 
   const items = [
-    { label: "Home", path: "/" },
+    { label: "Home", path: "/app" },
     { label: "Tools", path: "/tools" },
     { label: "Journal", path: "/journal" },
     { label: "Badges", path: "/badges" },
@@ -24,7 +24,7 @@ function Sidebar() {
 
   return (
     <aside className="brand-sidebar">
-      <Link className="sidebar-logo" to="/">
+      <Link className="sidebar-logo" to="/app">
         <img src={logo} alt="Dopamine Digital" />
       </Link>
 

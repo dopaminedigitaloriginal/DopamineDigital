@@ -5,7 +5,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
 
 export const AUTH_CHANGED_EVENT = "dopamine-auth-changed";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 
 export type ApiUser = {
   id: string;
@@ -98,9 +98,10 @@ type ReportRow = {
 };
 
 function assertSupabaseConfigured() {
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!supabase) {
     throw new Error("Supabase is not configured. Add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
   }
+  return supabase;
 }
 
 function mapUser(profile: ProfileRow | null | undefined): ApiUser | null {
@@ -157,7 +158,8 @@ function mapReport(report: ReportRow): ApiReport {
 }
 
 export function getToken() {
-  return supabase.auth.getSession().then(({ data }) => data.session?.access_token || null);
+  const client = assertSupabaseConfigured();
+  return client.auth.getSession().then(({ data }) => data.session?.access_token || null);
 }
 
 export function setToken() {
@@ -165,13 +167,14 @@ export function setToken() {
 }
 
 export async function clearToken() {
-  await supabase.auth.signOut();
+  const client = assertSupabaseConfigured();
+  await client.auth.signOut();
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 }
 
 export async function registerUser(input: { name: string; email: string; password: string }) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase.auth.signUp({
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client.auth.signUp({
     email: input.email,
     password: input.password,
     options: { data: { name: input.name } },
@@ -187,8 +190,8 @@ export async function registerUser(input: { name: string; email: string; passwor
 }
 
 export async function loginUser(input: { email: string; password: string }) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client.auth.signInWithPassword({
     email: input.email,
     password: input.password,
   });
@@ -205,8 +208,8 @@ export async function loginUser(input: { email: string; password: string }) {
 }
 
 export async function getMe() {
-  assertSupabaseConfigured();
-  const { data } = await supabase.auth.getUser();
+  const client = assertSupabaseConfigured();
+  const { data } = await client.auth.getUser();
   if (!data.user) return { user: null };
   return { user: await getProfile(data.user.id) };
 }
@@ -218,7 +221,8 @@ async function waitForProfile(userId: string, email: string, name: string) {
     await new Promise((resolve) => window.setTimeout(resolve, 250));
   }
 
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("profiles")
     .insert({ id: userId, email, name, role: "member", membership: "free", blocked: false })
     .select("*")
@@ -232,14 +236,15 @@ async function waitForProfile(userId: string, email: string, name: string) {
 }
 
 async function getProfile(userId: string) {
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", userId).single();
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client.from("profiles").select("*").eq("id", userId).single();
   if (error) return null;
   return mapUser(data as ProfileRow);
 }
 
 export async function getPosts(spaceId: string) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("posts")
     .select("*, profiles(*), comments(*, profiles(*))")
     .eq("space_id", spaceId)
@@ -250,10 +255,10 @@ export async function getPosts(spaceId: string) {
 }
 
 export async function createPost(input: { spaceId: string; title: string; body: string; type: string }) {
-  assertSupabaseConfigured();
-  const { data: auth } = await supabase.auth.getUser();
+  const client = assertSupabaseConfigured();
+  const { data: auth } = await client.auth.getUser();
   if (!auth.user) throw new Error("Login required");
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("posts")
     .insert({
       space_id: input.spaceId,
@@ -269,10 +274,10 @@ export async function createPost(input: { spaceId: string; title: string; body: 
 }
 
 export async function createComment(postId: string, body: string) {
-  assertSupabaseConfigured();
-  const { data: auth } = await supabase.auth.getUser();
+  const client = assertSupabaseConfigured();
+  const { data: auth } = await client.auth.getUser();
   if (!auth.user) throw new Error("Login required");
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("comments")
     .insert({ post_id: postId, body, author_id: auth.user.id })
     .select("*, profiles(*)")
@@ -282,10 +287,10 @@ export async function createComment(postId: string, body: string) {
 }
 
 export async function reportContent(input: { targetType: "post" | "comment"; targetId: string; reason: string }) {
-  assertSupabaseConfigured();
-  const { data: auth } = await supabase.auth.getUser();
+  const client = assertSupabaseConfigured();
+  const { data: auth } = await client.auth.getUser();
   if (!auth.user) throw new Error("Login required");
-  const { data, error } = await supabase
+  const { data, error } = await client
     .from("reports")
     .insert({
       reporter_id: auth.user.id,
@@ -300,17 +305,17 @@ export async function reportContent(input: { targetType: "post" | "comment"; tar
 }
 
 export async function blockUser(blockedId: string) {
-  assertSupabaseConfigured();
-  const { data: auth } = await supabase.auth.getUser();
+  const client = assertSupabaseConfigured();
+  const { data: auth } = await client.auth.getUser();
   if (!auth.user) throw new Error("Login required");
-  const { error } = await supabase.from("blocks").insert({ blocker_id: auth.user.id, blocked_id: blockedId });
+  const { error } = await client.from("blocks").insert({ blocker_id: auth.user.id, blocked_id: blockedId });
   if (error && !error.message.includes("duplicate")) throw new Error(error.message);
   return { ok: true };
 }
 
 export async function getAdminReports() {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("reports")
     .select("*, reporter:profiles(*)")
     .order("created_at", { ascending: false });
@@ -319,15 +324,15 @@ export async function getAdminReports() {
 }
 
 export async function getAdminUsers() {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client.from("profiles").select("*").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return { users: (data as ProfileRow[]).map((profile) => mapUser(profile)!) };
 }
 
 export async function getAdminPosts() {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("posts")
     .select("*, profiles(*), comments(*, profiles(*))")
     .order("created_at", { ascending: false });
@@ -336,15 +341,15 @@ export async function getAdminPosts() {
 }
 
 export async function updateReportStatus(reportId: string, status: ApiReport["status"]) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase.from("reports").update({ status }).eq("id", reportId).select("*, reporter:profiles(*)").single();
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client.from("reports").update({ status }).eq("id", reportId).select("*, reporter:profiles(*)").single();
   if (error) throw new Error(error.message);
   return { report: mapReport(data as ReportRow) };
 }
 
 export async function updatePostModeration(postId: string, hidden: boolean) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("posts")
     .update({ hidden })
     .eq("id", postId)
@@ -355,8 +360,8 @@ export async function updatePostModeration(postId: string, hidden: boolean) {
 }
 
 export async function updateUserAdmin(userId: string, input: Partial<Pick<ApiUser, "role" | "membership" | "blocked">>) {
-  assertSupabaseConfigured();
-  const { data, error } = await supabase
+  const client = assertSupabaseConfigured();
+  const { data, error } = await client
     .from("profiles")
     .update(input)
     .eq("id", userId)
