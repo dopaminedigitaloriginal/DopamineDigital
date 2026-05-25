@@ -1,0 +1,81 @@
+{
+  "users": [
+    {
+      "id": "4783276a-ae87-489a-b09f-f1f8edf155ca",
+      "name": "Test Member",
+      "email": "test1022500186@dopaminedigital.local",
+      "role": "admin",
+      "membership": "free",
+      "blocked": false,
+      "passwordHash": "8dd5506494af6c3ae312ebfe598175e6fb087a1bdfb3675975c5d67e8fdb43e962a83bf76df38412d67a0edcf7750aac2295570413839c463fcc3006e5b4d690",
+      "passwordSalt": "5ad79341645dfb603fb282838c05ff77",
+      "createdAt": "2026-05-25T17:43:37.962Z"
+    },
+    {
+      "id": "9f89002f-7358-4e3d-8d42-7016f138066b",
+      "name": "Dopamine member",
+      "email": "staceywalsh1993@hotmail.co.uk",
+      "role": "member",
+      "membership": "free",
+      "blocked": false,
+      "passwordHash": "c23eb14cd02e075bdeea5a7a516f127d9c75d114f103c562f8f958822b37752da7fddc01b82bd567295dee23aa0f19c5d90a4e6e5529fe1afa2654f1b93f29bb",
+      "passwordSalt": "0f8a110204944358e0b0f9861d647eac",
+      "createdAt": "2026-05-25T18:11:31.612Z"
+    }
+  ],
+  "spaces": [
+    {
+      "id": "public-support",
+      "name": "Support thread",
+      "visibility": "public",
+      "paidOnly": false,
+      "createdAt": "2026-05-25T17:42:29.537Z"
+    },
+    {
+      "id": "wins",
+      "name": "Streak shares",
+      "visibility": "public",
+      "paidOnly": false,
+      "createdAt": "2026-05-25T17:42:29.551Z"
+    },
+    {
+      "id": "body-double",
+      "name": "Body doubling",
+      "visibility": "public",
+      "paidOnly": false,
+      "createdAt": "2026-05-25T17:42:29.551Z"
+    },
+    {
+      "id": "members",
+      "name": "Member support room",
+      "visibility": "private",
+      "paidOnly": true,
+      "createdAt": "2026-05-25T17:42:29.551Z"
+    }
+  ],
+  "posts": [
+    {
+      "id": "6f16697b-5ebc-4f68-b199-ab084bef274b",
+      "spaceId": "public-support",
+      "authorId": "4783276a-ae87-489a-b09f-f1f8edf155ca",
+      "type": "support",
+      "title": "Support test",
+      "body": "Backend support post works.",
+      "hidden": false,
+      "createdAt": "2026-05-25T17:43:38.138Z"
+    }
+  ],
+  "comments": [
+    {
+      "id": "7ab07b01-959b-4112-a65d-6ed3c5628c3d",
+      "postId": "6f16697b-5ebc-4f68-b199-ab084bef274b",
+      "authorId": "4783276a-ae87-489a-b09f-f1f8edf155ca",
+      "body": "Backend reply works too.",
+      "hidden": false,
+      "createdAt": "2026-05-25T17:43:38.167Z"
+    }
+  ],
+  "reports": [],
+  "blocks": [],
+  "notifications": []
+}
