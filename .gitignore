@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+cloudflared.exe
+node_modules
+dist
+.env
+.env.local
+server/data
+*.log
