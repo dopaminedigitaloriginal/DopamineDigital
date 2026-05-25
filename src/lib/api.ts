@@ -177,9 +177,11 @@ export async function registerUser(input: { name: string; email: string; passwor
     options: { data: { name: input.name } },
   });
   if (error) throw new Error(error.message);
-  if (!data.user) throw new Error("Could not create account");
+  if (!data.user) {
+    throw new Error("Supabase did not return a user. Check Auth > Providers > Email: enable signups and turn email confirmation off while testing.");
+  }
 
-  const user = await waitForProfile(data.user.id);
+  const user = await waitForProfile(data.user.id, data.user.email || input.email, input.name);
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
   return { token: data.session?.access_token || "", user };
 }
@@ -209,13 +211,24 @@ export async function getMe() {
   return { user: await getProfile(data.user.id) };
 }
 
-async function waitForProfile(userId: string) {
+async function waitForProfile(userId: string, email: string, name: string) {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const profile = await getProfile(userId);
     if (profile) return profile;
     await new Promise((resolve) => window.setTimeout(resolve, 250));
   }
-  throw new Error("Account created, but profile is not ready yet");
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert({ id: userId, email, name, role: "member", membership: "free", blocked: false })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(`Account created, but profile was not created: ${error.message}`);
+  }
+
+  return mapUser(data as ProfileRow);
 }
 
 async function getProfile(userId: string) {
