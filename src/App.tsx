@@ -15,6 +15,7 @@ import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import Journal from "./pages/Journal";
 import Badges from "./pages/Badges";
+import Games, { GameTool } from "./pages/Games";
 import AnxietyToolkit, { ToolkitTool } from "./pages/AnxietyToolkit";
 import { Privacy, Safety, Terms } from "./pages/Legal";
 import { AUTH_CHANGED_EVENT, getMe, type ApiUser } from "./lib/api";
@@ -72,6 +73,8 @@ function App() {
           <Route path="/tools" element={<Tools />} />
           <Route path="/tools/:toolId" element={<Tools />} />
           <Route path="/journal" element={<Journal />} />
+          <Route path="/games" element={<Games />} />
+          <Route path="/games/:gameId" element={<GameTool />} />
           <Route path="/toolkit" element={<AnxietyToolkit />} />
           <Route path="/toolkit/:toolId" element={<ToolkitTool />} />
           <Route path="/badges" element={<Badges />} />

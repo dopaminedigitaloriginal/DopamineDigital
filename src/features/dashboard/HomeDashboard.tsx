@@ -27,6 +27,7 @@ const hubCards = [
   { title: "Toolkit", path: "/toolkit", label: "Text anxiety tools, reset games, scripts", imageClass: "toolkit" },
   { title: "Tools", path: "/tools", label: "Focus timer and regulation tools", imageClass: "tools" },
   { title: "Journal", path: "/journal", label: "Dedicated brain dump writing space", imageClass: "journal" },
+  { title: "Games", path: "/games", label: "Tiny playful resets for busy brains", imageClass: "games" },
   { title: "Resources", path: "/resources", label: "Calming, ADHD support, RSD resets", imageClass: "resources" },
 ];
 
