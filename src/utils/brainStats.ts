@@ -1,3 +1,5 @@
+import { supabase } from "../lib/api";
+
 export type BrainTag = "task" | "anxiety" | "idea" | "reminder";
 
 export type BrainNote = {
@@ -22,6 +24,13 @@ export type DailyStats = {
   focusSessionsToday: number;
   resetsToday: number;
   streakDays: number;
+};
+
+export type OnboardingNeed = "focus" | "anxiety" | "brain-dump" | "rsd" | "burnout" | "motivation";
+
+export type OnboardingPreference = {
+  primaryNeed: OnboardingNeed;
+  completedAt: string;
 };
 
 export type DailyMission = {
@@ -52,6 +61,7 @@ export const FOCUS_SESSIONS_KEY = "focus_sessions_log";
 export const LEGACY_FOCUS_SESSIONS_KEY = "focus_sessions";
 export const RESET_LOG_KEY = "reset_log";
 export const MOOD_CHECKINS_KEY = "mood_energy_checkins";
+export const ONBOARDING_KEY = "dopamine_onboarding_preference";
 
 export function getTodayKey(date = new Date()) {
   return date.toDateString();
@@ -89,6 +99,18 @@ export function writeJson<T>(key: string, value: T) {
   window.dispatchEvent(new Event("brain-os-storage"));
 }
 
+async function getAuthedUserId() {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user?.id || null;
+}
+
+function quietly(task: Promise<unknown>) {
+  task.catch(() => {
+    // Cloud sync is a progressive enhancement. LocalStorage remains the fallback.
+  });
+}
+
 export function normalizeNote(note: Partial<BrainNote> & { tag?: string }, index: number): BrainNote {
   const createdAt = note.createdAt || new Date().toISOString();
   const text = note.text || "";
@@ -110,6 +132,7 @@ export function getBrainNotes() {
 
 export function saveBrainNotes(notes: BrainNote[]) {
   writeJson(BRAIN_DUMP_KEY, notes);
+  if (notes.length === 0) quietly(clearCloudBrainNotes());
 }
 
 export function addBrainNote(text: string) {
@@ -126,38 +149,257 @@ export function addBrainNote(text: string) {
   };
 
   saveBrainNotes([note, ...getBrainNotes()]);
+  quietly(saveCloudBrainNote(note));
   return note;
 }
 
 export function recordFocusSession() {
   const sessions = readJson<string[]>(FOCUS_SESSIONS_KEY, []);
-  writeJson(FOCUS_SESSIONS_KEY, [new Date().toISOString(), ...sessions]);
+  const createdAt = new Date().toISOString();
+  writeJson(FOCUS_SESSIONS_KEY, [createdAt, ...sessions]);
+  quietly(saveCloudEvent("focus_sessions", createdAt));
 }
 
 export function recordReset() {
   const resets = readJson<string[]>(RESET_LOG_KEY, []);
-  writeJson(RESET_LOG_KEY, [new Date().toISOString(), ...resets]);
+  const createdAt = new Date().toISOString();
+  writeJson(RESET_LOG_KEY, [createdAt, ...resets]);
+  quietly(saveCloudEvent("reset_logs", createdAt));
 }
 
 export function saveMoodCheckIn(mood: number, energy: number, emotion?: string, emoji?: string) {
   const checkins = readJson<MoodCheckIn[]>(MOOD_CHECKINS_KEY, []);
+  const checkin = {
+    mood,
+    energy,
+    emotion,
+    emoji,
+    date: getTodayKey(),
+    createdAt: new Date().toISOString(),
+  };
   writeJson(MOOD_CHECKINS_KEY, [
-    {
-      mood,
-      energy,
-      emotion,
-      emoji,
-      date: getTodayKey(),
-      createdAt: new Date().toISOString(),
-    },
+    checkin,
     ...checkins,
   ]);
+  quietly(saveCloudMoodCheckIn(checkin));
 }
 
 export function getMoodCheckIns() {
   return readJson<MoodCheckIn[]>(MOOD_CHECKINS_KEY, []).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
+}
+
+export function getOnboardingPreference() {
+  return readJson<OnboardingPreference | null>(ONBOARDING_KEY, null);
+}
+
+export function saveOnboardingPreference(primaryNeed: OnboardingNeed) {
+  const preference: OnboardingPreference = {
+    primaryNeed,
+    completedAt: new Date().toISOString(),
+  };
+
+  writeJson(ONBOARDING_KEY, preference);
+  quietly(saveCloudOnboardingPreference(preference));
+  return preference;
+}
+
+export async function syncCloudProgress() {
+  if (!supabase) return { ok: false, reason: "Supabase is not configured" };
+  const userId = await getAuthedUserId();
+  if (!userId) return { ok: false, reason: "Login required" };
+
+  await Promise.allSettled([
+    syncBrainNotes(userId),
+    syncMoodCheckIns(userId),
+    syncEventLog(userId, "focus_sessions", FOCUS_SESSIONS_KEY),
+    syncEventLog(userId, "reset_logs", RESET_LOG_KEY),
+    syncOnboardingPreference(userId),
+  ]);
+
+  window.dispatchEvent(new Event("brain-os-storage"));
+  return { ok: true };
+}
+
+async function saveCloudBrainNote(note: BrainNote) {
+  if (!supabase) return;
+  const userId = await getAuthedUserId();
+  if (!userId) return;
+  await supabase.from("brain_notes").upsert({
+    user_id: userId,
+    text: note.text,
+    tag: note.tag,
+    local_date: note.date,
+    local_time: note.time,
+    local_created_at: note.createdAt,
+  }, { onConflict: "user_id,local_created_at" });
+}
+
+async function clearCloudBrainNotes() {
+  if (!supabase) return;
+  const userId = await getAuthedUserId();
+  if (!userId) return;
+  await supabase.from("brain_notes").delete().eq("user_id", userId);
+}
+
+async function saveCloudMoodCheckIn(checkin: MoodCheckIn) {
+  if (!supabase) return;
+  const userId = await getAuthedUserId();
+  if (!userId) return;
+  await supabase.from("mood_checkins").upsert({
+    user_id: userId,
+    mood: checkin.mood,
+    energy: checkin.energy,
+    emotion: checkin.emotion || null,
+    emoji: checkin.emoji || null,
+    local_date: checkin.date,
+    local_created_at: checkin.createdAt,
+  }, { onConflict: "user_id,local_created_at" });
+}
+
+async function saveCloudEvent(table: "focus_sessions" | "reset_logs", createdAt: string) {
+  if (!supabase) return;
+  const userId = await getAuthedUserId();
+  if (!userId) return;
+  await supabase.from(table).upsert({
+    user_id: userId,
+    occurred_at: createdAt,
+  }, { onConflict: "user_id,occurred_at" });
+}
+
+async function saveCloudOnboardingPreference(preference: OnboardingPreference) {
+  if (!supabase) return;
+  const userId = await getAuthedUserId();
+  if (!userId) return;
+  await supabase.from("onboarding_preferences").upsert({
+    user_id: userId,
+    primary_need: preference.primaryNeed,
+    completed_at: preference.completedAt,
+  }, { onConflict: "user_id" });
+}
+
+async function syncBrainNotes(userId: string) {
+  if (!supabase) return;
+  const localNotes = getBrainNotes();
+  const { data, error } = await supabase
+    .from("brain_notes")
+    .select("text, tag, local_date, local_time, local_created_at")
+    .eq("user_id", userId)
+    .order("local_created_at", { ascending: false });
+  if (error) throw error;
+
+  const cloudNotes = (data || []).map((row) => normalizeNote({
+    text: row.text,
+    tag: row.tag,
+    date: row.local_date,
+    time: row.local_time,
+    createdAt: row.local_created_at,
+  }, 0));
+  const merged = mergeByCreatedAt(localNotes, cloudNotes);
+  writeJson(BRAIN_DUMP_KEY, merged);
+
+  if (merged.length) {
+    await supabase.from("brain_notes").upsert(merged.map((note) => ({
+      user_id: userId,
+      text: note.text,
+      tag: note.tag,
+      local_date: note.date,
+      local_time: note.time,
+      local_created_at: note.createdAt,
+    })), { onConflict: "user_id,local_created_at" });
+  }
+}
+
+async function syncMoodCheckIns(userId: string) {
+  if (!supabase) return;
+  const localCheckIns = getMoodCheckIns();
+  const { data, error } = await supabase
+    .from("mood_checkins")
+    .select("mood, energy, emotion, emoji, local_date, local_created_at")
+    .eq("user_id", userId)
+    .order("local_created_at", { ascending: false });
+  if (error) throw error;
+
+  const cloudCheckIns = (data || []).map((row) => ({
+    mood: Number(row.mood),
+    energy: Number(row.energy),
+    emotion: row.emotion || undefined,
+    emoji: row.emoji || undefined,
+    date: row.local_date,
+    createdAt: row.local_created_at,
+  }));
+  const merged = mergeByCreatedAt(localCheckIns, cloudCheckIns);
+  writeJson(MOOD_CHECKINS_KEY, merged);
+
+  if (merged.length) {
+    await supabase.from("mood_checkins").upsert(merged.map((checkin) => ({
+      user_id: userId,
+      mood: checkin.mood,
+      energy: checkin.energy,
+      emotion: checkin.emotion || null,
+      emoji: checkin.emoji || null,
+      local_date: checkin.date,
+      local_created_at: checkin.createdAt,
+    })), { onConflict: "user_id,local_created_at" });
+  }
+}
+
+async function syncEventLog(userId: string, table: "focus_sessions" | "reset_logs", key: string) {
+  if (!supabase) return;
+  const localEvents = readJson<string[]>(key, []);
+  const { data, error } = await supabase
+    .from(table)
+    .select("occurred_at")
+    .eq("user_id", userId)
+    .order("occurred_at", { ascending: false });
+  if (error) throw error;
+
+  const cloudEvents = (data || []).map((row) => row.occurred_at);
+  const merged = [...new Set([...localEvents, ...cloudEvents])].sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  writeJson(key, merged);
+
+  if (merged.length) {
+    await supabase.from(table).upsert(merged.map((occurredAt) => ({
+      user_id: userId,
+      occurred_at: occurredAt,
+    })), { onConflict: "user_id,occurred_at" });
+  }
+}
+
+async function syncOnboardingPreference(userId: string) {
+  if (!supabase) return;
+  const localPreference = getOnboardingPreference();
+  const { data, error } = await supabase
+    .from("onboarding_preferences")
+    .select("primary_need, completed_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+
+  const cloudPreference = data ? {
+    primaryNeed: data.primary_need as OnboardingNeed,
+    completedAt: data.completed_at,
+  } : null;
+  const preference = latestPreference(localPreference, cloudPreference);
+  if (!preference) return;
+
+  writeJson(ONBOARDING_KEY, preference);
+  await saveCloudOnboardingPreference(preference);
+}
+
+function mergeByCreatedAt<T extends { createdAt: string }>(localItems: T[], cloudItems: T[]) {
+  const map = new Map<string, T>();
+  [...cloudItems, ...localItems].forEach((item) => map.set(item.createdAt, item));
+  return [...map.values()].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+function latestPreference(localPreference: OnboardingPreference | null, cloudPreference: OnboardingPreference | null) {
+  if (!localPreference) return cloudPreference;
+  if (!cloudPreference) return localPreference;
+  return new Date(localPreference.completedAt).getTime() >= new Date(cloudPreference.completedAt).getTime()
+    ? localPreference
+    : cloudPreference;
 }
 
 export function getLatestCheckInToday() {

@@ -10,8 +10,11 @@ import {
   getDailyStats,
   getLatestCheckInToday,
   getMoodCheckIns,
+  getOnboardingPreference,
   getMissionSummary,
   saveMoodCheckIn,
+  saveOnboardingPreference,
+  type OnboardingNeed,
 } from "../../utils/brainStats";
 
 const emotions = [
@@ -31,6 +34,20 @@ const hubCards = [
   { title: "Resources", path: "/resources", label: "Calming, ADHD support, RSD resets", imageClass: "resources" },
 ];
 
+const onboardingOptions: Array<{
+  id: OnboardingNeed;
+  title: string;
+  copy: string;
+  path: string;
+}> = [
+  { id: "focus", title: "Focus", copy: "Start a timer and reduce the noise.", path: "/tools/focus" },
+  { id: "anxiety", title: "Anxiety", copy: "Open a calming reset or breathing tool.", path: "/toolkit/breathing" },
+  { id: "brain-dump", title: "Brain dump", copy: "Empty the mental tabs into your journal.", path: "/journal" },
+  { id: "rsd", title: "RSD", copy: "Use a gentle reframe for spirals.", path: "/toolkit/reframe" },
+  { id: "burnout", title: "Burnout", copy: "Choose a tiny reset instead of a full overhaul.", path: "/toolkit/reset" },
+  { id: "motivation", title: "Motivation", copy: "Try a dopamine game or tiny win.", path: "/games/tiny-wins-garden" },
+];
+
 function formatElapsed(startedAt: string | null) {
   if (!startedAt) return "00:00";
   const elapsed = Math.max(0, Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000));
@@ -46,6 +63,7 @@ function HomeDashboard() {
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [emotion, setEmotion] = useState(emotions[0]);
+  const [onboardingPreference, setOnboardingPreference] = useState(getOnboardingPreference);
   const [showCheckInHistory, setShowCheckInHistory] = useState(false);
   const [thought, setThought] = useState("");
   const [elapsed, setElapsed] = useState(formatElapsed(focusStartedAt));
@@ -101,6 +119,12 @@ function HomeDashboard() {
       navigate("/tools/focus");
     }
     if (missionId === "energy-scan") document.querySelector(".checkin-console")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  const chooseOnboardingNeed = (need: OnboardingNeed, path: string) => {
+    const preference = saveOnboardingPreference(need);
+    setOnboardingPreference(preference);
+    navigate(path);
   };
 
   return (
@@ -174,6 +198,27 @@ function HomeDashboard() {
           ))}
         </div>
       </section>
+
+      {!onboardingPreference && (
+        <section className="onboarding-panel">
+          <div className="section-heading-row">
+            <div>
+              <p className="section-kicker">Quick setup</p>
+              <h2>What do you need today?</h2>
+              <p className="muted-copy">Pick one and Dopamine Digital will take you straight to the right support.</p>
+            </div>
+            <BrainMascot size="xs" mood="happy" />
+          </div>
+          <div className="onboarding-choice-grid">
+            {onboardingOptions.map((option) => (
+              <button className="onboarding-choice" key={option.id} onClick={() => chooseOnboardingNeed(option.id, option.path)} type="button">
+                <strong>{option.title}</strong>
+                <span>{option.copy}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="home-launch-grid four-up" aria-label="Homepage navigation">
         {hubCards.map((card) => (

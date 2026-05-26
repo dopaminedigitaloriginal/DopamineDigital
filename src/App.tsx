@@ -19,6 +19,7 @@ import Games, { GameTool } from "./pages/Games";
 import AnxietyToolkit, { ToolkitTool } from "./pages/AnxietyToolkit";
 import { Privacy, Safety, Terms } from "./pages/Legal";
 import { AUTH_CHANGED_EVENT, getMe, type ApiUser } from "./lib/api";
+import { syncCloudProgress } from "./utils/brainStats";
 
 function AuthGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -30,7 +31,10 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const checkAuth = () => {
     setChecking(true);
     getMe()
-      .then((data) => setUser(data.user))
+      .then((data) => {
+        setUser(data.user);
+        if (data.user) syncCloudProgress();
+      })
       .catch(() => setUser(null))
       .finally(() => setChecking(false));
   };

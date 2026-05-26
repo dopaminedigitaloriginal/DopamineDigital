@@ -57,7 +57,7 @@ function BrainDump({ variant = "card" }: BrainDumpProps) {
       <p className="muted-copy">
         {isFocusMode
           ? "Focus mode is active. Drop the thought fast and stay in flow."
-          : "Thoughts save locally and auto-tag into task, anxiety, idea, or reminder."}
+          : "Thoughts auto-tag into task, anxiety, idea, or reminder and sync when your account is connected."}
       </p>
 
       <form className="brain-input-row journal-input-row" onSubmit={addNote}>
