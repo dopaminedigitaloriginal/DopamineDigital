@@ -13,6 +13,7 @@ function CommandPalette() {
     { label: "Home", hint: "Open dashboard", run: () => navigate("/app") },
     { label: "Tools", hint: "Open tools", run: () => navigate("/tools") },
     { label: "Journal", hint: "Open brain dump journal", run: () => navigate("/journal") },
+    { label: "Insights", hint: "Open progress dashboard", run: () => navigate("/insights") },
     { label: "Games", hint: "Open mini games", run: () => navigate("/games") },
     { label: "Dopamine Pop", hint: "Open bubble popping game", run: () => navigate("/games/dopamine-pop") },
     { label: "Tiny Wins Garden", hint: "Open tiny wins garden", run: () => navigate("/games/tiny-wins-garden") },

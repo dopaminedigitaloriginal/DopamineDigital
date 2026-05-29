@@ -15,6 +15,7 @@ function Sidebar() {
     { label: "Home", path: "/app" },
     { label: "Tools", path: "/tools" },
     { label: "Journal", path: "/journal" },
+    { label: "Insights", path: "/insights" },
     { label: "Games", path: "/games" },
     { label: "Badges", path: "/badges" },
     { label: "Resources", path: "/resources" },

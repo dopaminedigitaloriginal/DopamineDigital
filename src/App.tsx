@@ -16,6 +16,7 @@ import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import Journal from "./pages/Journal";
 import Badges from "./pages/Badges";
+import Insights from "./pages/Insights";
 import Games, { GameTool } from "./pages/Games";
 import AnxietyToolkit, { ToolkitTool } from "./pages/AnxietyToolkit";
 import { Privacy, Safety, Terms } from "./pages/Legal";
@@ -79,6 +80,7 @@ function App() {
           <Route path="/tools" element={<Tools />} />
           <Route path="/tools/:toolId" element={<Tools />} />
           <Route path="/journal" element={<Journal />} />
+          <Route path="/insights" element={<Insights />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:gameId" element={<GameTool />} />
           <Route path="/toolkit" element={<AnxietyToolkit />} />
