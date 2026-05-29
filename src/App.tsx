@@ -9,6 +9,7 @@ import BrainMascot from "./components/BrainMascot";
 import Landing from "./pages/Landing";
 import Home from "./pages/Home";
 import Resources from "./pages/Resources";
+import CrisisSupport from "./pages/CrisisSupport";
 import Tools from "./pages/Tools";
 import Community from "./pages/Community";
 import Account from "./pages/Account";
@@ -25,7 +26,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [user, setUser] = useState<ApiUser | null>(null);
   const [checking, setChecking] = useState(true);
-  const publicPaths = ["/", "/account", "/privacy", "/terms", "/safety"];
+  const publicPaths = ["/", "/account", "/privacy", "/terms", "/safety", "/crisis-support"];
   const isPublicPage = publicPaths.includes(location.pathname);
 
   const checkAuth = () => {
@@ -73,6 +74,7 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/safety" element={<Safety />} />
+          <Route path="/crisis-support" element={<CrisisSupport />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/tools/:toolId" element={<Tools />} />

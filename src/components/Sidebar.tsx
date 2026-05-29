@@ -18,6 +18,7 @@ function Sidebar() {
     { label: "Games", path: "/games" },
     { label: "Badges", path: "/badges" },
     { label: "Resources", path: "/resources" },
+    { label: "Crisis Support", path: "/crisis-support" },
     { label: "Community", path: "/community" },
     { label: "Account", path: "/account" },
     ...(user?.role === "admin" ? [{ label: "Admin", path: "/admin" }] : []),

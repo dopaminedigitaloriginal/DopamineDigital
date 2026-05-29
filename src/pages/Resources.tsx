@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import BrainMascot from "../components/BrainMascot";
 
 type ResourceTone = "adhd" | "anxiety" | "rsd";
@@ -138,6 +139,7 @@ const resourceGroups: ResourceGroup[] = [
 ];
 
 const connectLinks = [
+  { label: "Crisis Support", url: "/crisis-support", external: false },
   { label: "Shop Dopamine Digital", url: "https://payhip.com/DopamineDigital", external: true },
   { label: "ADHD TikTok Content", url: "https://www.tiktok.com/@dopaminedigital_", external: true },
   { label: "Instagram", url: "https://www.instagram.com/dopaminedigital_", external: true },
@@ -349,6 +351,7 @@ const supportLibraryStyles = `
 `;
 
 export default function Resources() {
+  const navigate = useNavigate();
   const [selectedResource, setSelectedResource] = useState<SupportResource | null>(null);
   const [activeUrl, setActiveUrl] = useState<string | null>(null);
 
@@ -358,7 +361,7 @@ export default function Resources() {
       return;
     }
 
-    setActiveUrl(url);
+    navigate(url);
   };
 
   return (

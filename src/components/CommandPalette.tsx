@@ -25,6 +25,7 @@ function CommandPalette() {
     { label: "Response templates", hint: "Open copy scripts", run: () => navigate("/toolkit/templates") },
     { label: "Reframe game", hint: "Open thought reframe", run: () => navigate("/toolkit/reframe") },
     { label: "Resources", hint: "Open resources", run: () => navigate("/resources") },
+    { label: "Crisis support", hint: "Open hotline directory", run: () => navigate("/crisis-support") },
     { label: "Community", hint: "Open community", run: () => navigate("/community") },
     { label: "Add thought", hint: "Quick brain dump", run: () => {
       const thought = window.prompt("Quick brain dump:");
